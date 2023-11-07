@@ -2,6 +2,7 @@ package rpcinterceptor
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"connectrpc.com/connect"
@@ -16,7 +17,7 @@ type Connect struct {
 	Interceptor Interceptor
 }
 
-func (c *Connect) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
+func (c Connect) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
 	return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
 		spec := req.Spec()
 		msgIn, err := toMessage(req.Any())
@@ -31,7 +32,7 @@ func (c *Connect) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
 		// Build the stream chain.
 		stream, err := c.Interceptor(ctx, cstream)
 		if err != nil {
-			return nil, err
+			return nil, asConnectErr(err)
 		}
 		if stream.IsClient() {
 			if err := sendAndClose(stream, msgIn); err != nil {
@@ -68,7 +69,7 @@ func (c *Connect) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
 	}
 }
 
-func (c *Connect) WrapStreamingClient(next connect.StreamingClientFunc) connect.StreamingClientFunc {
+func (c Connect) WrapStreamingClient(next connect.StreamingClientFunc) connect.StreamingClientFunc {
 	return func(ctx context.Context, spec connect.Spec) connect.StreamingClientConn {
 		conn := next(ctx, spec)
 		cstream := &connectClientStream{
@@ -86,7 +87,7 @@ func (c *Connect) WrapStreamingClient(next connect.StreamingClientFunc) connect.
 	}
 }
 
-func (c *Connect) WrapStreamingHandler(next connect.StreamingHandlerFunc) connect.StreamingHandlerFunc {
+func (c Connect) WrapStreamingHandler(next connect.StreamingHandlerFunc) connect.StreamingHandlerFunc {
 	return func(ctx context.Context, conn connect.StreamingHandlerConn) error {
 		cstream := &connectServerStream{
 			conn: conn,
@@ -287,4 +288,17 @@ func (c connectServerConn) Send(v any) error {
 	}
 	return c.stream.Recv(msg)
 
+}
+
+func asConnectErr(err error) error {
+	if err == nil {
+		return nil
+	}
+	if ce := (*connect.Error)(nil); errors.As(err, &ce) {
+		return ce
+	}
+	if ec := (*Error)(nil); errors.As(err, &ec) {
+		return connect.NewError(connect.Code(ec.Code), ec)
+	}
+	return err
 }

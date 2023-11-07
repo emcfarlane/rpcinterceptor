@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package rpcinterceptor.authorize;
+
+import "buf/validate/expression.proto";
+import "google/protobuf/descriptor.proto";
+
+option go_package = "github.com/emcfarlane/rpcinterceptor/gen/authorize";
+
+extend google.protobuf.MethodOptions {
+  // The authorization for this method.
+  optional MethodConstraints method = 72295729;
+}
+
+message MethodConstraints {
+  // The constraints for the RPC method.
+  // TODO: docs
+  repeated buf.validate.Constraint cel = 3;
+}

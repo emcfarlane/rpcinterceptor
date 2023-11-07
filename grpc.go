@@ -19,7 +19,7 @@ type GRPC struct {
 	Interceptor Interceptor
 }
 
-func (g *GRPC) UnaryServer() grpc.UnaryServerInterceptor {
+func (g GRPC) UnaryServer() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp any, err error) {
 		md, _ := metadata.FromIncomingContext(ctx)
 		gstream := &grpcUnaryStream{
@@ -55,7 +55,7 @@ func (g *GRPC) UnaryServer() grpc.UnaryServerInterceptor {
 		return rsp, nil
 	}
 }
-func (g *GRPC) UnaryClient() grpc.UnaryClientInterceptor {
+func (g GRPC) UnaryClient() grpc.UnaryClientInterceptor {
 	return func(ctx context.Context, method string, req any, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		// TODO: metadata for client, need to do
 		md, _ := metadata.FromOutgoingContext(ctx)
@@ -96,7 +96,7 @@ func (g *GRPC) UnaryClient() grpc.UnaryClientInterceptor {
 	}
 }
 
-func (g *GRPC) StreamServer() grpc.StreamServerInterceptor {
+func (g GRPC) StreamServer() grpc.StreamServerInterceptor {
 	return func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 		md, _ := metadata.FromIncomingContext(ss.Context())
 		gstream := &grpcServerStream{
@@ -114,7 +114,7 @@ func (g *GRPC) StreamServer() grpc.StreamServerInterceptor {
 		})
 	}
 }
-func (g *GRPC) StreamClient() grpc.StreamClientInterceptor {
+func (g GRPC) StreamClient() grpc.StreamClientInterceptor {
 	return func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
 		// ...
 		conn, err := streamer(ctx, desc, cc, method, opts...)
