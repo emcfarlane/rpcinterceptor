@@ -13,12 +13,8 @@ import (
 	"github.com/emcfarlane/rpcinterceptor/gen/examples/examplesconnect"
 )
 
-type user struct {
-	Name  string
-	Roles []string
-}
-
 func Example_connectAuthorize() {
+	// See the examples proto for the service definition.
 	users := map[string]*examples.User{
 		"alice": {Name: "alice", Roles: []string{"admin"}},
 		"bob":   {Name: "bob", Roles: []string{"user"}},
@@ -46,6 +42,7 @@ func Example_connectAuthorize() {
 	mux := http.NewServeMux()
 	mux.Handle(examplesconnect.NewPingServiceHandler(
 		svc, connect.WithInterceptors(
+			// Add connect bindings to the interceptor.
 			rpcinterceptor.Connect{authorizer},
 		),
 	))

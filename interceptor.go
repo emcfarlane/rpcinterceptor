@@ -1,3 +1,5 @@
+// Package rpcinterceptor provides a generic interceptor framework for RPC
+// frameworks [connect] and [grpc].
 package rpcinterceptor
 
 import (
